@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>DSC数字卷轴 - 生态游戏</title>
+<style>
+    /* 全局样式 */
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: 'Segoe UI', system-ui, sans-serif;
+    }
+
+    body {
+        background: linear-gradient(135deg, #0a192f, #020c1b);
+        color: #e6f1ff;
+        min-height: 100vh;
+        line-height: 1.6;
+        overflow-x: hidden;
+    }
+
+    /* 动态背景特效 */
+    .cyber-grid {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background-image: 
+            linear-gradient(rgba(0, 231, 255, 0.1) 1px, transparent 1px),
+            linear-gradient(90deg, rgba(0, 231, 255, 0.1) 1px, transparent 1px);
+        background-size: 30px 30px;
+        animation: gridScroll 50s linear infinite;
+        z-index: 0;
+    }
+
+    @keyframes gridScroll {
+        0% { transform: translate(0, 0); }
+        100% { transform: translate(-30px, 30px); }
+    }
+
+    /* 主标题区域 */
+    .main-title {
+        text-align: center;
+        padding: 40px 20px;
+        margin: 20px;
+        background: rgba(16, 25, 46, 0.8);
+        border-radius: 15px;
+        box-shadow: 0 0 40px rgba(0, 231, 255, 0.2);
+        position: relative;
+        overflow: hidden;
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(0, 231, 255, 0.3);
+    }
+
+    .main-title::before {
+        content: "";
+        position: absolute;
+        top: -50%;
+        left: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(0,231,255,0.1) 0%, transparent 70%);
+        animation: rotate 20s linear infinite;
+    }
+
+    .main-title-content {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-wrap: wrap;
+        position: relative;
+        z-index: 1;
+    }
+
+    .main-logo {
+        height: 50px;
+        margin-right: 20px;
+        filter: drop-shadow(0 0 8px #00f3ff);
+    }
+
+    .main-title h2 {
+        font-size: 2.5rem;
+        margin: 0;
+        color: #00f3ff;
+        text-shadow: 0 0 15px rgba(0, 243, 255, 0.6);
+        background: linear-gradient(90deg, #00f3ff, #0066ff);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+    }
+
+    /* 动态按钮样式 */
+    .home-btn {
+        padding: 12px 32px;
+        background: linear-gradient(45deg, #0066ff, #00f3ff);
+        color: white;
+        border: none;
+        border-radius: 4px;
+        font-size: 16px;
+        cursor: pointer;
+        transition: all 0.3s;
+        position: relative;
+        overflow: hidden;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+    }
+
+    .home-btn::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(
+            90deg,
+            transparent,
+            rgba(255,255,255,0.3),
+            transparent
+        );
+        transition: 0.5s;
+    }
+
+    .home-btn:hover::before {
+        left: 100%;
+    }
+
+    /* 游戏卡片 */
+    .game-card {
+        background: rgba(16, 25, 46, 0.6);
+        border-radius: 8px;
+        margin-bottom: 20px;
+        overflow: hidden;
+        position: relative;
+        backdrop-filter: blur(10px);
+        border: 1px solid rgba(0, 231, 255, 0.3);
+        box-shadow: 0 0 20px rgba(0, 231, 255, 0.1);
+        transition: transform 0.3s;
+    }
+
+    .game-card:hover {
+        transform: translateY(-5px);
+    }
+
+    .game-card::after {
+        content: "";
+        position: absolute;
+        top: -2px;
+        left: -2px;
+        right: -2px;
+        bottom: -2px;
+        background: linear-gradient(45deg, #00f3ff, #0066ff, transparent);
+        z-index: -1;
+        animation: borderGlow 3s linear infinite;
+    }
+
+    @keyframes borderGlow {
+        0% { opacity: 0.5; }
+        50% { opacity: 1; }
+        100% { opacity: 0.5; }
+    }
+
+    /* 游戏标题 */
+    .game-header {
+        padding: 20px;
+        background: linear-gradient(90deg, rgba(0,102,255,0.3), transparent);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+    }
+
+    .game-name {
+        font-size: 18px;
+        font-weight: bold;
+        color: #00f3ff;
+        text-shadow: 0 0 10px rgba(0, 243, 255, 0.5);
+    }
+
+    .coming-soon {
+        background: linear-gradient(45deg, #ff003c, #ff6600);
+        color: white;
+        padding: 5px 12px;
+        border-radius: 4px;
+        font-size: 12px;
+        margin-left: 15px;
+        box-shadow: 0 0 10px rgba(255, 0, 60, 0.3);
+    }
+
+    /* 内容区域 */
+    .game-content {
+        padding: 0 20px;
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.3s ease-out;
+    }
+
+    .game-content.active {
+        padding: 20px;
+        max-height: 2000px;
+    }
+
+    .section-title {
+        color: #00f3ff;
+        border-bottom: 1px solid rgba(0, 231, 255, 0.3);
+        padding-bottom: 10px;
+        margin-bottom: 15px;
+        position: relative;
+    }
+
+    .section-title::after {
+        content: "";
+        position: absolute;
+        bottom: -2px;
+        left: 0;
+        width: 30%;
+        height: 2px;
+        background: linear-gradient(90deg, #00f3ff, transparent);
+    }
+
+    /* 悬浮粒子特效 */
+    .particles {
+        position: fixed;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        z-index: -1;
+    }
+
+    .particle {
+        position: absolute;
+        background: radial-gradient(circle, #00f3ff 20%, transparent 100%);
+        border-radius: 50%;
+        animation: float 20s infinite linear;
+    }
+
+    @keyframes float {
+        0% { transform: translateY(0) translateX(0); opacity: 0; }
+        20% { opacity: 1; }
+        100% { transform: translateY(-1000px) translateX(500px); opacity: 0; }
+    }
+</style>
+</head>
+<body>
+    <!-- 主标题区域 -->
+    <div class="main-title">
+        <div class="main-title-content">
+            <img src="images/logo01.png" alt="DSC Logo" class="main-logo">
+            <h2>DSC生态游戏</h2>
+        </div>
+        <p>体验基于区块链技术的创新游戏生态，参与游戏获取额外收益，享受游戏乐趣的同时增加数字资产</p>
+        <div class="home-btn-container">
+            <button class="home-btn">返回首页</button>
+        </div>
+    </div>
+    
+    <!-- 游戏列表 -->
+    <div class="game-container">
+        <!-- 哈希竞猜游戏 -->
+        <div class="game-card">
+            <div class="game-header" onclick="toggleGame(this, 'hashGame')">
+                <span class="game-name">
+                    哈希竞猜
+                </span>
+                <span>▼</span>
+            </div>
+            <div class="game-content" id="hashGame">
+                <div class="game-section">
+                    <h3 class="section-title">游戏概述</h3>
+                    <p class="game-desc">哈希游戏是基于区块链哈希值的预测游戏，玩家可以参与猜单双、猜大小和猜特码三种玩法，体验区块链技术的公平透明。</p>
+                </div>
+                
+                <div class="game-section">
+                    <h3 class="section-title">游戏类型</h3>
+                    
+                    <div class="game-feature">
+                        <h4>1. 猜单双</h4>
+                        <ul>
+                            <li>玩法：预测特别号码是单数还是双数</li>
+                            <li>单数赔率：1.8</li>
+                            <li>双数赔率：1.85</li>
+                            <li>开奖频率：每20分钟一次</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="game-feature">
+                        <h4>2. 猜大小</h4>
+                        <ul>
+                            <li>玩法：预测特别号码的大小</li>
+                            <li>1-24为"小"，25-49为"大"</li>
+                            <li>大数赔率：1.8</li>
+                            <li>小数赔率：1.85</li>
+                            <li>开奖频率：每20分钟一次</li>
+                        </ul>
+                    </div>
+                    
+                    <div class="game-feature">
+                        <h4>3. 猜特码</h4>
+                        <ul>
+                            <li>玩法：直接预测1-49之间的特码数字</li>
+                            <li>赔率：46</li>
+                            <li>开奖频率：每24小时一次</li>
+                        </ul>
+                    </div>
+                </div>
+                
+                <div class="game-section">
+                    <h3 class="section-title">开奖规则</h3>
+                    <p class="game-desc">系统从指定区块哈希值右至左取连续2位数字，若在1-49范围内则为特别号码，超出则继续向左寻找。</p>
+                </div>
+                
+                <div class="game-section">
+                    <h3 class="section-title">游戏特点</h3>
+                    <ul class="game-feature">
+                        <li>基于区块链技术，公平透明</li>
+                        <li>多种玩法选择，满足不同偏好</li>
+                        <li>高中奖率与高赔率并存</li>
+                    </ul>
+                </div>
+                
+                <div class="game-tips">
+                    <p class="tips-title">温馨提示</p>
+                    <p class="tips-content">哈希游戏是一种娱乐方式，请理性参与。建议玩家在了解游戏规则后再进行参与。</p>
+                </div>
+            </div>
+        </div>
+        <!-- 掘金引擎游戏 -->
+        <div class="game-card">
+            <div class="game-header" onclick="toggleGame(this, 'miningGame')">
+                <span class="game-name">
+                    掘金引擎
+                  <span class="coming-soon">近期上线</span>
+                </span>
+                <span>▼</span>
+            </div>
+            <div class="game-content" id="miningGame">
+                <div class="game-section">
+                    <h3 class="section-title">游戏阶段参数表</h3>
+                    <table class="game-table">
+                        <thead>
+                            <tr>
+                                <th>游戏阶段</th>
+                                <th>奖池区间</th>
+                                <th>单次投注额</th>
+                                <th>开奖延迟</th>
+                                <th>游戏晋阶投注次数</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr>
+                                <td>阶段1</td>
+                                <td>1,000-1,999</td>
+                                <td>1币</td>
+                                <td>+5分钟</td>
+                                <td>1,000次</td>
+                            </tr>
+                            <tr>
+                                <td>阶段2</td>
+                                <td>2,000-4,999</td>
+                                <td>2币</td>
+                                <td>+4分钟</td>
+                                <td>1,500次</td>
+                            </tr>
+                            <tr>
+                                <td>阶段3</td>
+                                <td>5,000-9,999</td>
+                                <td>5币</td>
+                                <td>+3分钟</td>
+                                <td>1,000次</td>
+                            </tr>
+                            <tr>
+                                <td>阶段4</td>
+                                <td>10,000-14,999</td>
+                                <td>10币</td>
+                                <td>+2分钟</td>
+                                <td>500次</td>
+                            </tr>
+                            <tr>
+                                <td>阶段5</td>
+                                <td>15,000-19,999</td>
+                                <td>20币</td>
+                                <td>+1分钟</td>
+                                <td>250次</td>
+                            </tr>
+                            <tr>
+                                <td>决胜阶段</td>
+                                <td>≥20,000</td>
+                                <td>30币</td>
+                                <td>+30秒</td>
+                                <td>-</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+                
+                <div class="game-section">
+                    <h3 class="section-title">核心规则</h3>
+                    <ul class="game-feature">
+                        <li><strong>初始设置</strong>
+                            <ul>
+                                <li>初始奖池：1,000币</li>
+                                <li>初始开奖倒计时：12小时</li>
+                            </ul>
+                        </li>
+                        <li><strong>倒计时机制</strong>
+                            <ul>
+                                <li>每次投注根据阶段延长倒计时（见上表），倒计时归零即开奖。</li>
+                            </ul>
+                        </li>
+                        <li><strong>决胜阶段投注条件</strong>
+                            <ul>
+                                <li>1至5阶段均有参与投注者，方可参与决胜局的投注意竞争。</li>
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
+                
+                <div class="game-section">
+                    <h3 class="section-title">奖池分配规则</h3>
+                    <ul class="game-feature">
+                        <li><strong>开奖后，先进行阶段投注资金返还，再进行奖池资金分配</strong>
+                            <ul>
+                                <li><strong>阶段投注资金返还（仅阶段1-4）</strong>
+                                    <table class="game-table">
+                                        <thead>
+                                            <tr>
+                                                <th>返还比例</th>
+                                                <th>覆盖范围（按投注顺序）</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            <tr>
+                                                <td>100%</td>
+                                                <td>阶段前10%投注者</td>
+                                            </tr>
+                                            <tr>
+                                                <td>70%</td>
+                                                <td>阶段前30%投注者</td>
+                                            </tr>
+                                            <tr>
+                                                <td>50%</td>
+                                                <td>阶段前50%投注者</td>
+                                            </tr>
+                                            <tr>
+                                                <td>30%</td>
+                                                <td>阶段前70%投注者</td>
+                                            </tr>
+                                        </tbody>
+                                    </table>
+                                </li>
+                                <li><strong>幸运返还</strong>：5%（随机抽取阶段5的投注者进行全额返还）</li>
+                            </ul>
+                        </li>
+                        <li><strong>奖池资金分配</strong>
+                            <ul>
+                                <li><strong>预留资金</strong>：1,000币（作为下一轮种子）</li>
+                                <li><strong>剩余分配</strong>：
+                                    <ul>
+                                        <li>最后投注者：45%</li>
+                                        <li>倒数2-10名投注者：8%（均分）</li>
+                                        <li>运营方：7%</li>
+                                        <li>销毁：25%</li>
+                                        <li>推荐奖励：10%</li>
+                                    </ul>
+                                </li>
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
+                
+                <div class="game-tips">
+                    <p class="tips-title">温馨提示</p>
+                    <p>掘金引擎是一种创新游戏模式，请仔细阅读规则后再参与。游戏10号左右上线，敬请期待！</p>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 底部区域 -->
+    <footer class="page-footer">
+        <h3 class="footer-title">欢迎加入DSC生态游戏</h3>
+        <p class="footer-desc">数字卷轴DSC致力于打造完整的区块链游戏生态系统，未来将推出更多创新游戏，为用户提供更多元的娱乐和收益方式。</p>
+        <p class="footer-desc">关注本站，获取最新游戏上线信息。</p>
+        <p class="footer-copyright">© 2023 数字卷轴DSC 卷界链 | 基于区块链技术的创新生态游戏系统</p>
+    </footer>
+    
+    <script>
+        // 当前展开的游戏ID
+        let currentOpenGame = null;
+        
+        // 切换游戏详情显示/隐藏
+        function toggleGame(headerElement, gameId) {
+            const content = document.getElementById(gameId);
+            const arrow = headerElement.querySelector('span:last-child');
+            
+            // 如果点击的是当前已展开的游戏，则关闭它
+            if (currentOpenGame === gameId) {
+                content.classList.remove('active');
+                arrow.textContent = '▼';
+                currentOpenGame = null;
+                return;
+            }
+            
+            // 关闭之前打开的游戏
+            if (currentOpenGame) {
+                const prevContent = document.getElementById(currentOpenGame);
+                const prevHeader = prevContent.previousElementSibling;
+                const prevArrow = prevHeader.querySelector('span:last-child');
+                
+                prevContent.classList.remove('active');
+                prevArrow.textContent = '▼';
+            }
+            
+            // 打开当前点击的游戏
+            content.classList.add('active');
+            arrow.textContent = '▲';
+            currentOpenGame = gameId;
+        }
+        
+        // 返回首页按钮
+        document.querySelector('.home-btn').addEventListener('click', function() {
+            window.location.href = 'index.html';
+        });
+    </script>
+</body>
+</html>
